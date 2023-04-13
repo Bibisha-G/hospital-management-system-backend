@@ -1,11 +1,14 @@
-from .models import CustomUser, PatientProfile, DoctorProfile
-from .serializers import PatientProfileSerializer, DoctorProfileSerializer
+from .models import CustomUser, PatientProfile, DoctorProfile, Review
+from .serializers import PatientProfileSerializer, DoctorProfileSerializer, ReviewSerializer
 from rest_framework import viewsets
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -46,3 +49,28 @@ class PatientProfileViewSet(viewsets.ModelViewSet):
 class DoctorProfileViewSet(viewsets.ModelViewSet):
     queryset = DoctorProfile.objects.all()
     serializer_class = DoctorProfileSerializer
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+
+class ActivateAccountView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        try:
+            print("adasd", token)
+            payload = RefreshToken(token).payload
+            user_id = payload['user_id']
+            user = CustomUser.objects.get(id=user_id)
+            if not user.is_active:
+                user.is_active = True
+                user.save()
+                return Response({'message': 'Account activated successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': 'Account already activated'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("bruh")
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
