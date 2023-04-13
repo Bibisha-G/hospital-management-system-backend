@@ -66,6 +66,7 @@ class Profile(models.Model):
     age = models.IntegerField(default=18)
     avatar_slug = models.URLField(max_length=500)
     is_complete = models.BooleanField(default=False)
+    info = models.CharField(max_length=220, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -74,7 +75,6 @@ class Profile(models.Model):
 class PatientProfile(Profile):
     height = models.PositiveIntegerField(null=True, blank=True)
     weight = models.PositiveIntegerField(null=True, blank=True)
-    info = models.CharField(max_length=220, null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.name}"
