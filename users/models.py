@@ -64,7 +64,8 @@ class Profile(models.Model):
         CustomUser, on_delete=models.CASCADE)
     is_private = models.BooleanField(default=False)
     age = models.IntegerField(default=18)
-    avatar_slug = models.SlugField(max_length=200)
+    avatar_slug = models.URLField(max_length=500)
+    is_complete = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
