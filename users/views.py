@@ -61,16 +61,16 @@ class ActivateAccountView(APIView):
 
     def get(self, request, token):
         try:
-            print("adasd", token)
             payload = RefreshToken(token).payload
             user_id = payload['user_id']
             user = CustomUser.objects.get(id=user_id)
+            print(user.id)
             if not user.is_active:
                 user.is_active = True
                 user.save()
+                print(user.is_active)
                 return Response({'message': 'Account activated successfully'}, status=status.HTTP_200_OK)
             else:
                 return Response({'message': 'Account already activated'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print("bruh")
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)

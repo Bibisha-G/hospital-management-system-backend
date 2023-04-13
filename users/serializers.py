@@ -1,9 +1,9 @@
-
 from rest_framework import serializers
 from .models import CustomUser, PatientProfile, DoctorProfile, Review
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
+from hospital.serializers import AppointmentSerializer
 
 
 def get_access_token(user):
@@ -12,10 +12,21 @@ def get_access_token(user):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    profile_id = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
-        fields = ["id", "email", "name",
-                  "password", "is_active", "is_patient", "is_doctor"]
+        fields = ["id", "email", "name", "password", "is_active",
+                  "is_patient", "is_doctor", "profile_id"]
+
+    def get_profile_id(self, obj):
+        try:
+            if obj.is_patient:
+                return obj.patientprofile.id
+            elif obj.is_doctor:
+                return obj.doctorprofile.id
+        except:
+            return None
 
     def create(self, validated_data):
         user = CustomUser.objects.create(**validated_data)
@@ -36,6 +47,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class PatientProfileSerializer(serializers.ModelSerializer):
+    appointments_as_patient = AppointmentSerializer(many=True, read_only=True)
+
     class Meta:
         model = PatientProfile
         fields = '__all__'
@@ -56,6 +69,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
     reviews = ReviewSerializer(many=True, read_only=True)
+    appointments_as_doctor = AppointmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = DoctorProfile

@@ -17,11 +17,11 @@ class UserManager(BaseUserManager):
     use_in_migration = True
 
     def create_user(self, email, password=None, **extra_fields):
+
         if not email:
             raise ValueError('Email is Required')
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
-        user.is_active = False  # set user as inactive by default
         user.save(using=self._db)
         return user
 
@@ -44,7 +44,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(max_length=100, unique=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     is_admin = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_patient = models.BooleanField(default=False)

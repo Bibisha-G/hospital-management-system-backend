@@ -1,6 +1,7 @@
 from rest_framework import generics
-from .models import Department
-from .serializers import DepartmentSerializer
+from rest_framework import viewsets
+from .models import Department, Appointment
+from .serializers import DepartmentSerializer, AppointmentSerializer
 
 
 class DepartmentList(generics.ListAPIView):
@@ -16,3 +17,8 @@ class DepartmentDetail(generics.RetrieveAPIView):
         queryset = self.get_queryset()
         obj = queryset.get(pk=self.kwargs['pk'])
         return obj
+
+
+class AppointmentViewSet(viewsets.ModelViewSet):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
