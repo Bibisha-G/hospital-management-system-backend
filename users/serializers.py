@@ -48,6 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class PatientProfileSerializer(serializers.ModelSerializer):
     appointments_as_patient = AppointmentSerializer(many=True, read_only=True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = PatientProfile
@@ -70,6 +71,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 class DoctorProfileSerializer(serializers.ModelSerializer):
     reviews = ReviewSerializer(many=True, read_only=True)
     appointments_as_doctor = AppointmentSerializer(many=True, read_only=True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = DoctorProfile
