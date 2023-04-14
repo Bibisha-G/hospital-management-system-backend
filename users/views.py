@@ -31,6 +31,20 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = []
 
+    @action(detail=False, methods=['get'])
+    def get_doctors_by_department(self, request):
+        department_id = request.query_params.get('department_id')
+        try:
+            department = Department.objects.get(id=department_id)
+            doctors = DoctorProfile.objects.filter(department=department)
+            doctors_id_list = doctors.values_list('user_id', flat=True)
+            users = CustomUser.objects.filter(id__in=doctors_id_list)
+            serializer = self.serializer_class(
+                users, many=True, context={'request': request})
+            return Response(serializer.data)
+        except Department.DoesNotExist:
+            return Response({'detail': f'Department with id {department_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -68,18 +82,6 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(is_complete=True)
         return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def get_doctors_by_department(self, request):
-        department_id = request.query_params.get('department_id')
-        try:
-            department = Department.objects.get(id=department_id)
-            doctors = DoctorProfile.objects.filter(department=department)
-            serializer = self.serializer_class(
-                doctors, many=True, context={'request': request})
-            return Response(serializer.data)
-        except Department.DoesNotExist:
-            return Response({'detail': f'Department with id {department_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
