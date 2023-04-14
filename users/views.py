@@ -3,12 +3,14 @@ from .serializers import PatientProfileSerializer, DoctorProfileSerializer, Revi
 from rest_framework import viewsets
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.decorators import action
 from .serializers import UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
+from hospital.models import Department
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -66,6 +68,18 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(is_complete=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def get_doctors_by_department(self, request):
+        department_id = request.query_params.get('department_id')
+        try:
+            department = Department.objects.get(id=department_id)
+            doctors = DoctorProfile.objects.filter(department=department)
+            serializer = self.serializer_class(
+                doctors, many=True, context={'request': request})
+            return Response(serializer.data)
+        except Department.DoesNotExist:
+            return Response({'detail': f'Department with id {department_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
