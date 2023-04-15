@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'hospital',
+    'payments',
     'rest_framework',
     'rest_framework_simplejwt'
 ]
@@ -157,3 +158,9 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 CLIENT_URL = 'http://127.0.0.1:8000'
+
+
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET')
+CHECKOUT_SUCCESS_URL = "http://localhost:5173/dashboard/payment/checkout/success"
+CHECKOUT_FAILED_URL = "http://localhost:5173/dashboard/payment/checkout/failed"

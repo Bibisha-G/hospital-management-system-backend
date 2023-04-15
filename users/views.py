@@ -1,4 +1,4 @@
-from .models import CustomUser, PatientProfile, DoctorProfile, Review
+from .models import CustomUser, PatientProfile, DoctorProfile, Review, DoctorAvailability, TimeSlot
 from .serializers import PatientProfileSerializer, DoctorProfileSerializer, ReviewSerializer
 from rest_framework import viewsets
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -11,6 +11,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from hospital.models import Department
+from datetime import datetime
+from rest_framework import generics
+from .serializers import TimeSlotSerializer
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -80,6 +83,34 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Department.DoesNotExist:
             return Response({'detail': f'Department with id {department_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class DoctorAvailabilityView(generics.ListAPIView):
+    serializer_class = TimeSlotSerializer
+
+    def get_queryset(self):
+        try:
+            date = datetime.strptime(self.kwargs['date'], "%Y-%m-%d").date()
+        except ValueError:
+            return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            doctor = DoctorProfile.objects.get(id=self.kwargs['doctor_id'])
+        except DoctorProfile.DoesNotExist:
+            return Response({'error': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            availability = DoctorAvailability.objects.get(
+                doctor=doctor, date=date)
+        except DoctorAvailability.DoesNotExist:
+            return Response({'error': 'No availability for this doctor on this date'}, status=status.HTTP_404_NOT_FOUND)
+
+        available_time_slots = []
+        for time_slot in availability.time_slots.all():
+            if DoctorAvailability.objects.is_time_slot_available(doctor, date, time_slot):
+                available_time_slots.append(time_slot)
+
+        return available_time_slots
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

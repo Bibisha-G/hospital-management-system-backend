@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, PatientProfile, DoctorProfile, Review
+from .models import CustomUser, PatientProfile, DoctorProfile, Review, TimeSlot
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
@@ -76,3 +76,9 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = DoctorProfile
         fields = '__all__'
+
+
+class TimeSlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TimeSlot
+        fields = ('id', 'start_time', 'end_time')
