@@ -85,7 +85,7 @@ class DoctorProfile(Profile):
     specialization = models.CharField(max_length=100)
     qualifications = models.CharField(max_length=500)
     treatments = models.CharField(max_length=999)
-    experience = models.PositiveIntegerField()
+    experience = models.PositiveIntegerField(null=True, blank=True)
     is_approved = models.BooleanField(default=False)
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE, null=True, blank=True, related_name='doctors')
