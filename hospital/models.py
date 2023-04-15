@@ -15,14 +15,12 @@ class Appointment(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appointments_as_patient')
     doctor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appointments_as_doctor')
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    time_slot = models.ForeignKey(
+        'users.TimeSlot', on_delete=models.CASCADE, related_name='appointments')
+    date = models.DateField()
+    appointment_charge = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Appointment of {self.patient.name} with {self.doctor.name} at {self.start_time.strftime('%Y-%m-%d %H:%M')}"
-
-    def clean(self):
-        # Check if the appointment start time is before the end time
-        if self.start_time >= self.end_time:
-            raise ValidationError(
-                'The appointment start time must be before the end time.')
+        formatted_date = self.date.strftime('%d-%m-%Y')
+        return f"Appointment of {self.patient.name} with {self.doctor.name} on {formatted_date}"

@@ -10,6 +10,8 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
+from hospital.models import Appointment
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class UserManager(BaseUserManager):
@@ -82,12 +84,55 @@ class PatientProfile(Profile):
 
 class DoctorProfile(Profile):
     specialization = models.CharField(max_length=100)
+    qualifications = models.CharField(max_length=500)
+    treatments = models.CharField(max_length=999)
+    experience = models.PositiveIntegerField(null=True, blank=True)
     is_approved = models.BooleanField(default=False)
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE, null=True, blank=True, related_name='doctors')
 
     def __str__(self):
         return f"{self.user.name}"
+
+
+class DoctorAvailabilityManager(models.Manager):
+    def is_time_slot_available(self, doctor, date, time_slot):
+        availability = self.get(doctor=doctor, date=date)
+        if time_slot in availability.time_slots.all():
+            return not Appointment.objects.filter(doctor=doctor, date=date, time_slot=time_slot).exists()
+        return False
+
+
+class DoctorAvailability(models.Model):
+    WEEKDAYS = [
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+    ]
+
+    doctor = models.ForeignKey(
+        DoctorProfile, on_delete=models.CASCADE, related_name='availability')
+    day = models.IntegerField(choices=WEEKDAYS, validators=[
+                              MaxValueValidator(5)])
+    time_slots = models.ManyToManyField('TimeSlot')
+
+    objects = DoctorAvailabilityManager()
+
+    class Meta:
+        unique_together = ('doctor', 'day',)
+
+
+class TimeSlot(models.Model):
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    online_appointment_charge = models.PositiveIntegerField()
+    physical_appointment_charge = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.start_time.strftime('%I:%M %p')} - {self.end_time.strftime('%I:%M %p')}"
 
 
 class Review(models.Model):
@@ -97,6 +142,7 @@ class Review(models.Model):
     text = models.TextField(blank=True, max_length=999)
     rating = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)])
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Review of {self.doctor.user.name} by {self.reviewer.name}"
