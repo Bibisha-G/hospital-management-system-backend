@@ -11,6 +11,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 from hospital.models import Appointment
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class UserManager(BaseUserManager):
@@ -103,15 +104,25 @@ class DoctorAvailabilityManager(models.Manager):
 
 
 class DoctorAvailability(models.Model):
+    WEEKDAYS = [
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+    ]
+
     doctor = models.ForeignKey(
         DoctorProfile, on_delete=models.CASCADE, related_name='availability')
-    date = models.DateField()
+    day = models.IntegerField(choices=WEEKDAYS, validators=[
+                              MaxValueValidator(5)])
     time_slots = models.ManyToManyField('TimeSlot')
 
     objects = DoctorAvailabilityManager()
 
     class Meta:
-        unique_together = ('doctor', 'date',)
+        unique_together = ('doctor', 'day',)
 
 
 class TimeSlot(models.Model):
