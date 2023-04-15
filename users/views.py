@@ -1,5 +1,5 @@
 from .models import CustomUser, PatientProfile, DoctorProfile, Review, DoctorAvailability, TimeSlot
-from .serializers import PatientProfileSerializer, DoctorProfileSerializer, ReviewSerializer
+from .serializers import PatientProfileSerializer, DoctorProfileSerializer, ReviewSerializer, DoctorAvailabilitySerializer
 from rest_framework import viewsets
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -84,33 +84,66 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
         except Department.DoesNotExist:
             return Response({'detail': f'Department with id {department_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
-
-class DoctorAvailabilityView(generics.ListAPIView):
-    serializer_class = TimeSlotSerializer
-
-    def get_queryset(self):
+    @action(detail=True, methods=['post'])
+    def set_availability(self, request, pk=None):
         try:
-            date = datetime.strptime(self.kwargs['date'], "%Y-%m-%d").date()
-        except ValueError:
-            return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            doctor = DoctorProfile.objects.get(id=self.kwargs['doctor_id'])
+            doctor = DoctorProfile.objects.get(pk=pk)
         except DoctorProfile.DoesNotExist:
-            return Response({'error': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': f'Doctor with id {pk} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            availability = DoctorAvailability.objects.get(
-                doctor=doctor, date=date)
-        except DoctorAvailability.DoesNotExist:
-            return Response({'error': 'No availability for this doctor on this date'}, status=status.HTTP_404_NOT_FOUND)
+        data = request.data
+        for day_data in data:
+            day = day_data.get('day')
+            time_slots_data = day_data.get('timeSlots')
+            if day and time_slots_data:
+                day_index = next(
+                    (index for (index, d) in DoctorAvailability.WEEKDAYS if d == day), None)
+                if day_index is not None:
+                    time_slots = []
+                    for time_slot_data in time_slots_data:
+                        start_time = time_slot_data.get('startTime')
+                        end_time = time_slot_data.get('endTime')
+                        if start_time and end_time:
+                            time_slot = TimeSlot.objects.create(
+                                start_time=start_time,
+                                end_time=end_time,
+                                online_appointment_charge=0,
+                                physical_appointment_charge=0
+                            )
+                            time_slots.append(time_slot)
+                    availability, _ = DoctorAvailability.objects.get_or_create(
+                        doctor=doctor,
+                        day=day_index
+                    )
+                    availability.time_slots.set(time_slots)
+                    availability.save()
 
-        available_time_slots = []
-        for time_slot in availability.time_slots.all():
-            if DoctorAvailability.objects.is_time_slot_available(doctor, date, time_slot):
-                available_time_slots.append(time_slot)
+        return Response({'detail': 'Availability set successfully.'})
 
-        return available_time_slots
+    @action(detail=True, methods=['get'])
+    def get_availability(self, request, pk=None):
+        doctor = self.get_object()
+        availability = doctor.availability.all()
+        serializer = DoctorAvailabilitySerializer(
+            availability, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class DoctorAvailabilityViewSet(viewsets.ModelViewSet):
+    queryset = DoctorAvailability.objects.all()
+    serializer_class = DoctorAvailabilitySerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Ensure that the specified doctor in the availability object is the same as the authenticated user.
+        if serializer.validated_data['doctor'].user != request.user:
+            return Response({'error': 'Invalid doctor profile.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

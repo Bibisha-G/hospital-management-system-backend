@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import CustomUser, PatientProfile, DoctorProfile, Review, TimeSlot
+from .models import CustomUser, PatientProfile, DoctorProfile, Review, TimeSlot, DoctorAvailability
+
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
@@ -81,4 +82,21 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
 class TimeSlotSerializer(serializers.ModelSerializer):
     class Meta:
         model = TimeSlot
-        fields = ('id', 'start_time', 'end_time')
+        fields = ('id', 'start_time', 'end_time',
+                  'online_appointment_charge', 'physical_appointment_charge')
+
+
+class DoctorAvailabilitySerializer(serializers.ModelSerializer):
+    time_slots = TimeSlotSerializer(many=True)
+
+    class Meta:
+        model = DoctorAvailability
+        fields = ('id', 'doctor', 'day', 'time_slots')
+
+    def create(self, validated_data):
+        time_slots_data = validated_data.pop('time_slots')
+        availability = DoctorAvailability.objects.create(**validated_data)
+        for slot_data in time_slots_data:
+            slot = TimeSlot.objects.get(pk=slot_data['id'])
+            availability.time_slots.add(slot)
+        return availability
