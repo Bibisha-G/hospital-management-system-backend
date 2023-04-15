@@ -16,3 +16,9 @@ class DepartmentViewset(viewsets.ModelViewSet):
 class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated:
+            return Appointment.objects.filter(user=user)
+        return Appointment.objects.none()

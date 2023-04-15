@@ -22,4 +22,5 @@ class Appointment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Appointment of {self.patient.name} with {self.doctor.name} at {self.start_time.strftime('%Y-%m-%d %H:%M')}"
+        formatted_date = self.date.strftime('%d-%m-%Y')
+        return f"Appointment of {self.patient.name} with {self.doctor.name} on {formatted_date}"

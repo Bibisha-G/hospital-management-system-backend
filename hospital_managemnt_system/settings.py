@@ -80,7 +80,7 @@ ROOT_URLCONF = 'hospital_managemnt_system.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -162,5 +162,5 @@ CLIENT_URL = 'http://127.0.0.1:8000'
 
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET')
-CHECKOUT_SUCCESS_URL = "http://localhost:5173/dashboard/payment/checkout/success"
-CHECKOUT_FAILED_URL = "http://localhost:5173/dashboard/payment/checkout/failed"
+CHECKOUT_SUCCESS_URL = "http://localhost:5173/dashboard/appointments/success"
+CHECKOUT_FAILED_URL = "http://localhost:5173/dashboard/appointments/failed"

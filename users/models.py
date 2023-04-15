@@ -142,6 +142,7 @@ class Review(models.Model):
     text = models.TextField(blank=True, max_length=999)
     rating = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)])
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Review of {self.doctor.user.name} by {self.reviewer.name}"

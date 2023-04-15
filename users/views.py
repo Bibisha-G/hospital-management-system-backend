@@ -92,7 +92,7 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
             return Response({'detail': f'Doctor with id {pk} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
         data = request.data
-        data = data['data']
+        # data = data['data']
         for day_data in data:
             day = day_data.get('day')
             time_slots_data = day_data.get('timeSlots')
@@ -104,12 +104,16 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
                     for time_slot_data in time_slots_data:
                         start_time = time_slot_data.get('startTime')
                         end_time = time_slot_data.get('endTime')
+                        online_appointment_price = time_slot_data.get(
+                            'online_appointment_charge')
+                        physical_appointment_price = time_slot_data.get(
+                            'physical_appointment_charge')
                         if start_time and end_time:
                             time_slot = TimeSlot.objects.create(
                                 start_time=start_time,
                                 end_time=end_time,
-                                online_appointment_charge=0,
-                                physical_appointment_charge=0
+                                online_appointment_charge=online_appointment_price,
+                                physical_appointment_charge=physical_appointment_price
                             )
                             time_slots.append(time_slot)
                     availability, _ = DoctorAvailability.objects.get_or_create(
