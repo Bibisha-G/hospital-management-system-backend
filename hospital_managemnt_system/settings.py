@@ -154,13 +154,12 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER='arslant374@gmail.com'
+EMAIL_HOST_PASSWORD='bsigrpcpoobgewmi'
 
 CLIENT_URL = 'http://127.0.0.1:8000'
-
-
-STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
-STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET')
-CHECKOUT_SUCCESS_URL = "http://localhost:5173/dashboard/appointments/success"
-CHECKOUT_FAILED_URL = "http://localhost:5173/dashboard/appointments/failed"
+STRIPE_PUBLISHABLE_KEY="pk_test_51Mwd0LE8c6uPwh6RhXAUdyjtOg1ZXX1A7nTRkGWOkpQKuwnV5oxHyjoDpbtTBtlroGDovwX9gtPybkx93r4d2Nfy00rwFHv6NI"
+STRIPE_SECRET_KEY="sk_test_51Mwd0LE8c6uPwh6RsFMsHDPYO9cfAJ0sdPoBjxiYyZXvju335ZFym7UKefWK3SGauNIu5gOcJ4vMjGrf7ciM8kyu00NnBdduS9"
+STRIPE_WEBHOOK_SECRET="whsec_9d0a10b16a9227782255b3c4e878e0878f2a16d3e95d008041036489e71195f7"
+CHECKOUT_SUCCESS_URL = "http://localhost:5173/dashboard/payment/checkout/success"
+CHECKOUT_FAILED_URL = "http://localhost:5173/dashboard/payment/checkout/failed"

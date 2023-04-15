@@ -92,7 +92,11 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
             return Response({'detail': f'Doctor with id {pk} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
         data = request.data
-        # data = data['data']
+        try:
+            data = data['data']
+        except:
+            data = data
+    
         for day_data in data:
             day = day_data.get('day')
             time_slots_data = day_data.get('timeSlots')
