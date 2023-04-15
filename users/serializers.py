@@ -1,16 +1,31 @@
 from rest_framework import serializers
-from .models import CustomUser, PatientProfile, DoctorProfile, Review, TimeSlot, DoctorAvailability
+from .models import CustomUser, PatientProfile, DoctorProfile, Review, TimeSlot, DoctorAvailability,Department, Appointment
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
-from hospital.serializers import AppointmentSerializer
+
+
 
 
 def get_access_token(user):
     refresh = RefreshToken.for_user(user)
     return str(refresh)
+class DepartmentSerializer(serializers.ModelSerializer):
+    doctors = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
+    class Meta:
+        model = Department
+        fields = '__all__'
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    patient_name = serializers.ReadOnlyField(source='patient.name')
+    doctor_name = serializers.ReadOnlyField(source='doctor.name')
+
+    class Meta:
+        model = Appointment
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     profile_id = serializers.SerializerMethodField()

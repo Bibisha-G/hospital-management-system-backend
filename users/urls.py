@@ -1,6 +1,8 @@
 from django.urls import path, include
 from rest_framework import routers
 from .views import RegisterView, MyTokenObtainPairView, UserViewSet, PatientProfileViewSet, DoctorProfileViewSet, ReviewViewSet, ActivateAccountView, DoctorAvailabilityViewSet
+from .views import AppointmentViewSet, DepartmentViewset
+
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -11,6 +13,8 @@ router.register(r'patients', PatientProfileViewSet)
 router.register(r'doctors', DoctorProfileViewSet)
 router.register(r'reviews', ReviewViewSet)
 router.register(r'doctor_avail', DoctorAvailabilityViewSet)
+router.register(r'hospital/appointments', AppointmentViewSet)
+router.register(r'hospital/departments', DepartmentViewset)
 
 urlpatterns = [
     path('', include(router.urls)),

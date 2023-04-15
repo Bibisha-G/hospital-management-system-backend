@@ -1,5 +1,5 @@
-from .models import CustomUser, PatientProfile, DoctorProfile, Review, DoctorAvailability, TimeSlot
-from .serializers import PatientProfileSerializer, DoctorProfileSerializer, ReviewSerializer, DoctorAvailabilitySerializer
+from .models import CustomUser, PatientProfile, DoctorProfile, Review, DoctorAvailability, TimeSlot ,Department, Appointment
+from .serializers import PatientProfileSerializer, DoctorProfileSerializer, ReviewSerializer, DoctorAvailabilitySerializer ,DepartmentSerializer, AppointmentSerializer
 from rest_framework import viewsets
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -10,7 +10,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-from hospital.models import Department
 from datetime import datetime
 from rest_framework import generics
 from .serializers import TimeSlotSerializer
@@ -178,3 +177,34 @@ class ActivateAccountView(APIView):
                 return Response({'message': 'Account already activated'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DepartmentViewset(viewsets.ModelViewSet):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+
+
+class AppointmentViewSet(viewsets.ModelViewSet):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
+
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     if user.is_authenticated:
+    #         return Appointment.objects.filter(user=user)
+    #     return Appointment.objects.none()
+        
+    @action(detail=False, methods=['get'])
+    def get_appointments_by_doctor(self, request):
+        doctor_id = request.query_params.get('doctor_id')
+        print(doctor_id)
+
+        try:
+            doctor = DoctorProfile.objects.get(id=doctor_id)            
+            apointments = Appointment.objects.filter(doctor=doctor.user.id)
+            print(apointments)
+            serializer = self.serializer_class(
+                apointments, many=True, context={'request': request})
+            return Response(serializer.data)
+        except DoctorProfile.DoesNotExist:
+            return Response({'detail': f'Doctor with id {doctor_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)

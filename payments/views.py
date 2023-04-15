@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 import stripe
 from django.conf import settings
 from django.http import JsonResponse
-from hospital.models import Appointment
+from users.models import Appointment
 from users.models import TimeSlot
 from datetime import datetime
 import json
