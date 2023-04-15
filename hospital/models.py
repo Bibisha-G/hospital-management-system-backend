@@ -18,6 +18,7 @@ class Appointment(models.Model):
     time_slot = models.ForeignKey(
         'users.TimeSlot', on_delete=models.CASCADE, related_name='appointments')
     date = models.DateField()
+    appointment_charge = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

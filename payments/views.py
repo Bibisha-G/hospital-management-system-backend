@@ -1,9 +1,13 @@
+from datetime import datetime
 from django.shortcuts import redirect
 from rest_framework.views import APIView
 import stripe
 from django.conf import settings
 from django.http import JsonResponse
-
+from hospital.models import Appointment
+from users.models import TimeSlot
+from datetime import datetime
+import json
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 webhook_secret = settings.STRIPE_WEBHOOK_SECRET
@@ -14,9 +18,12 @@ FRONTEND_CHECKOUT_FAILED_URL = settings.CHECKOUT_FAILED_URL
 
 class CreateCheckoutSession(APIView):
     def post(self, request):
-        dataDict = dict(request.data)
-        price = dataDict['price'][0]
-        product_name = dataDict['product_name'][0]
+        data_dict = dict(request.data)
+        price = data_dict['price'][0]
+        product_name = data_dict['product_name'][0]
+        appointment_details = data_dict['metadata[appointment_details]'][0]
+        appointment_dict = json.loads(appointment_details)
+
         try:
             checkout_session = stripe.checkout.Session.create(
                 line_items=[{
@@ -32,6 +39,14 @@ class CreateCheckoutSession(APIView):
                 mode='payment',
                 success_url=FRONTEND_CHECKOUT_SUCCESS_URL,
                 cancel_url=FRONTEND_CHECKOUT_FAILED_URL,
+                metadata={
+                    'doctor_id': str(appointment_dict['doctor_id']),
+                    'patient_id': str(appointment_dict['patient_id']),
+                    'time_slot_id': str(appointment_dict['appointment_time']['id']),
+                    'appointment_charge': str(appointment_dict['appointment_time']['physical_appointment_charge']),
+                    'appointment_type': str(appointment_dict['appointment_type']),
+                    'date': appointment_dict['appointment_date'],
+                }
             )
             return redirect(checkout_session.url, code=303)
         except Exception as e:
@@ -41,6 +56,20 @@ class CreateCheckoutSession(APIView):
 
 
 class WebHook(APIView):
+
+    def handle_success(self, session):
+        metadata = session.metadata
+        appointment = Appointment(
+            patient_id=int(metadata['patient_id']),
+            doctor_id=int(metadata['doctor_id']),
+            time_slot_id=int(metadata['time_slot_id']),
+            appointment_charge=int(metadata['appointment_charge']),
+            date=datetime.strptime(
+                metadata['date'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        )
+        appointment.save()
+        print("Appointment created:", appointment)
+
     def post(self, request):
         event = None
         payload = request.body
@@ -58,9 +87,9 @@ class WebHook(APIView):
             raise err
 
         # Handle the event
-        if event.type == 'payment_intent.succeeded':
-            payment_intent = event.data.object
-            print("--------payment_intent ---------->", payment_intent)
+        if event.type == 'checkout.session.completed':
+            session = event.data.object
+            self.handle_success(session)
         elif event.type == 'payment_method.attached':
             payment_method = event.data.object
             print("--------payment_method ---------->", payment_method)
@@ -68,4 +97,4 @@ class WebHook(APIView):
         else:
             print('Unhandled event type {}'.format(event.type))
 
-        return JsonResponse(success=True, safe=False)
+        return JsonResponse({'success': True})
