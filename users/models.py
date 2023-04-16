@@ -2,15 +2,13 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from hospital.models import Department
-
+from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
-from hospital.models import Appointment
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 
@@ -89,7 +87,7 @@ class DoctorProfile(Profile):
     experience = models.PositiveIntegerField(null=True, blank=True)
     is_approved = models.BooleanField(default=False)
     department = models.ForeignKey(
-        Department, on_delete=models.CASCADE, null=True, blank=True, related_name='doctors')
+        'Department', on_delete=models.CASCADE, null=True, blank=True, related_name='doctors')
 
     def __str__(self):
         return f"{self.user.name}"
@@ -114,7 +112,7 @@ class DoctorAvailability(models.Model):
     ]
 
     doctor = models.ForeignKey(
-        DoctorProfile, on_delete=models.CASCADE, related_name='availability')
+        'DoctorProfile', on_delete=models.CASCADE, related_name='availability')
     day = models.IntegerField(choices=WEEKDAYS, validators=[
                               MaxValueValidator(5)])
     time_slots = models.ManyToManyField('TimeSlot')
@@ -151,3 +149,26 @@ class Review(models.Model):
         # Check if the reviewer is the same as the doctor
         if self.doctor.user == self.reviewer:
             raise ValidationError('A doctor cannot give a review to himself.')
+
+
+class Department(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+class Appointment(models.Model):
+    patient = models.ForeignKey(
+        PatientProfile, on_delete=models.CASCADE, related_name='appointments_as_patient')
+    doctor = models.ForeignKey(
+        DoctorProfile, on_delete=models.CASCADE, related_name='appointments_as_doctor')
+    time_slot = models.ForeignKey(
+        'users.TimeSlot', on_delete=models.CASCADE, related_name='appointments')
+    date = models.DateField()
+    appointment_charge = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        formatted_date = self.date.strftime('%d-%m-%Y')
+        return f"Appointment of {self.patient.user.name} with {self.doctor.user.name} on {formatted_date}"

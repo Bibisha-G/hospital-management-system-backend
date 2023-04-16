@@ -4,11 +4,12 @@ from rest_framework.views import APIView
 import stripe
 from django.conf import settings
 from django.http import JsonResponse
-from hospital.models import Appointment
+from users.models import Appointment
 from users.models import TimeSlot
 from datetime import datetime
 import json
-
+import ast
+from users.models import TimeSlot,PatientProfile,DoctorProfile
 stripe.api_key = settings.STRIPE_SECRET_KEY
 webhook_secret = settings.STRIPE_WEBHOOK_SECRET
 
@@ -23,7 +24,7 @@ class CreateCheckoutSession(APIView):
         product_name = data_dict['product_name'][0]
         appointment_details = data_dict['metadata[appointment_details]'][0]
         appointment_dict = json.loads(appointment_details)
-
+        typeAppoint = {'online':'online_appointment_charge','physical':'physical_appointment_charge'}
         try:
             checkout_session = stripe.checkout.Session.create(
                 line_items=[{
@@ -42,8 +43,8 @@ class CreateCheckoutSession(APIView):
                 metadata={
                     'doctor_id': str(appointment_dict['doctor_id']),
                     'patient_id': str(appointment_dict['patient_id']),
-                    'time_slot_id': str(appointment_dict['appointment_time']['id']),
-                    'appointment_charge': str(appointment_dict['appointment_time']['physical_appointment_charge']),
+                    'time_slot': str(appointment_dict['appointment_time']),
+                    'appointment_charge': str(appointment_dict['appointment_time'][typeAppoint[appointment_dict['appointment_type']]]),
                     'appointment_type': str(appointment_dict['appointment_type']),
                     'date': appointment_dict['appointment_date'],
                 }
@@ -51,7 +52,6 @@ class CreateCheckoutSession(APIView):
             return redirect(checkout_session.url, code=303)
         except Exception as e:
             print(e)
-
             return e
 
 
@@ -59,14 +59,28 @@ class WebHook(APIView):
 
     def handle_success(self, session):
         metadata = session.metadata
-        appointment = Appointment(
-            patient_id=int(metadata['patient_id']),
-            doctor_id=int(metadata['doctor_id']),
-            time_slot_id=int(metadata['time_slot_id']),
+        time_slot = ast.literal_eval(metadata['time_slot'])
+        patient_profile = PatientProfile.objects.get(id=int(metadata['patient_id']))
+        doctor_profile = DoctorProfile.objects.get(id=int(metadata['doctor_id']))
+
+        instance = TimeSlot.objects.create(start_time=time_slot['start_time'],end_time=time_slot['end_time'],online_appointment_charge=time_slot['online_appointment_charge'],physical_appointment_charge=time_slot['physical_appointment_charge'])
+        # Create Appointment object
+        appointment = Appointment.objects.create(
+            patient=patient_profile,
+            doctor=doctor_profile,
+            time_slot=instance,
             appointment_charge=int(metadata['appointment_charge']),
             date=datetime.strptime(
                 metadata['date'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
         )
+        # appointment = Appointment(
+        #     patient_id=int(metadata['patient_id']),
+        #     doctor_id=int(metadata['doctor_id']),
+        #     time_slot = time,
+        #     appointment_charge=int(metadata['appointment_charge']),
+        #     date=datetime.strptime(
+        #         metadata['date'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        # )
         appointment.save()
         print("Appointment created:", appointment)
 
@@ -74,7 +88,7 @@ class WebHook(APIView):
         event = None
         payload = request.body
         sig_header = request.META['HTTP_STRIPE_SIGNATURE']
-
+        print("Hello")
         try:
             event = stripe.Webhook.construct_event(
                 payload, sig_header, webhook_secret

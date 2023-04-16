@@ -24,6 +24,5 @@ admin.site.index_title = "Hospital Management System Admin"
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),
-    path('hospital/', include('hospital.urls')),
     path('payment/', include('payments.urls')),
 ]
