@@ -157,8 +157,8 @@ EMAIL_HOST_USER='arslant374@gmail.com'
 EMAIL_HOST_PASSWORD='bsigrpcpoobgewmi'
 
 CLIENT_URL = 'http://127.0.0.1:8000'
-STRIPE_PUBLISHABLE_KEY="pk_test_51Mwd0LE8c6uPwh6RhXAUdyjtOg1ZXX1A7nTRkGWOkpQKuwnV5oxHyjoDpbtTBtlroGDovwX9gtPybkx93r4d2Nfy00rwFHv6NI"
-STRIPE_SECRET_KEY="sk_test_51Mwd0LE8c6uPwh6RsFMsHDPYO9cfAJ0sdPoBjxiYyZXvju335ZFym7UKefWK3SGauNIu5gOcJ4vMjGrf7ciM8kyu00NnBdduS9"
-STRIPE_WEBHOOK_SECRET="whsec_9d0a10b16a9227782255b3c4e878e0878f2a16d3e95d008041036489e71195f7"
-CHECKOUT_SUCCESS_URL = "http://localhost:5173/dashboard/payment/checkout/success"
-CHECKOUT_FAILED_URL = "http://localhost:5173/dashboard/payment/checkout/failed"
+STRIPE_PUBLISHABLE_KEY="pk_test_51MxKBXH1Az6zH5qMD78RzdWWT53dYm9r8zAZwVDFeYV9Cm6hwiwITdkOL6FIYAuZ0DwZltQZtTM5NWBjQjefAEjK00y9Ux1MPZ"
+STRIPE_SECRET_KEY="sk_test_51MxKBXH1Az6zH5qMRYIxAwwEOw7ixWMpeApqsGIgxSCjKqB4WEBle7Wn4nNDsFRQNQOMean2SBDMZcTmaRwhr1xt004lN6ceDU"
+STRIPE_WEBHOOK_SECRET="whsec_a4a59c28b97cdb83c9653ee6b1e8cfeec4946e79d5a616cb38f589debdca3155"
+CHECKOUT_SUCCESS_URL = "http://localhost:5173/dashboard/appointments/success"
+CHECKOUT_FAILED_URL = "http://localhost:5173/dashboard/appointments/failed"

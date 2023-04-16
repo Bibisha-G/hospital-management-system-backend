@@ -160,9 +160,9 @@ class Department(models.Model):
 
 class Appointment(models.Model):
     patient = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appointments_as_patient')
+        PatientProfile, on_delete=models.CASCADE, related_name='appointments_as_patient')
     doctor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appointments_as_doctor')
+        DoctorProfile, on_delete=models.CASCADE, related_name='appointments_as_doctor')
     time_slot = models.ForeignKey(
         'users.TimeSlot', on_delete=models.CASCADE, related_name='appointments')
     date = models.DateField()
@@ -171,4 +171,4 @@ class Appointment(models.Model):
 
     def __str__(self):
         formatted_date = self.date.strftime('%d-%m-%Y')
-        return f"Appointment of {self.patient.name} with {self.doctor.name} on {formatted_date}"
+        return f"Appointment of {self.patient.user.name} with {self.doctor.user.name} on {formatted_date}"

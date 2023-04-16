@@ -5,9 +5,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
 
-
-
-
 def get_access_token(user):
     refresh = RefreshToken.for_user(user)
     return str(refresh)
@@ -18,14 +15,6 @@ class DepartmentSerializer(serializers.ModelSerializer):
         model = Department
         fields = '__all__'
 
-
-class AppointmentSerializer(serializers.ModelSerializer):
-    patient_name = serializers.ReadOnlyField(source='patient.name')
-    doctor_name = serializers.ReadOnlyField(source='doctor.name')
-
-    class Meta:
-        model = Appointment
-        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     profile_id = serializers.SerializerMethodField()
@@ -61,6 +50,27 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+class TimeSlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TimeSlot
+        fields = ('id', 'start_time', 'end_time',
+                  'online_appointment_charge', 'physical_appointment_charge')
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    patient_name = serializers.ReadOnlyField(source='patient.user.name')
+    doctor_name = serializers.ReadOnlyField(source='doctor.user.name')
+    time_slot = TimeSlotSerializer()
+    class Meta:
+        model = Appointment
+        fields = '__all__'
+    
+    # def create(self, validated_data):
+    #     print(validated_data)
+    #     time_slot_data = validated_data.pop('time_slot')
+    #     time_slot = TimeSlot.objects.get(**time_slot_data)
+    #     print(time_slot)
+    #     appointment = Appointment.objects.create(time_slot=time_slot, **validated_data)
+    #     return appointment
 
 class PatientProfileSerializer(serializers.ModelSerializer):
     appointments_as_patient = AppointmentSerializer(many=True, read_only=True)
@@ -94,11 +104,6 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class TimeSlotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TimeSlot
-        fields = ('id', 'start_time', 'end_time',
-                  'online_appointment_charge', 'physical_appointment_charge')
 
 
 class DoctorAvailabilitySerializer(serializers.ModelSerializer):
